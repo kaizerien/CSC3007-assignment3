@@ -6,3 +6,8 @@
     width: 300px;
     height: 100px;
 }
+rect.colorLegend_swatch
+{
+  stroke: #000;
+  stroke-width: 0.5px;
+}
