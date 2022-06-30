@@ -3,6 +3,7 @@
 <html lang="en">
     <head>
         <script src="https://d3js.org/d3.v7.min.js"></script>
+        <script src="http://colorbrewer2.org/export/colorbrewer.js"></script>
         <!-- <script src="script.js"></script> -->
         <link rel="stylesheet" href="style.css" />
         <meta charset="UTF-8" />
@@ -17,8 +18,8 @@
                 <span class="sr-only">Loading...</span>
             </div>
         </div>
-        <h1>Number of cases by crime in Singapore</h1>
-        <div id="my_graph"></div>
+        <h1>Singapore Population Choropleth</h1>
+        <svg></svg>
     </body>
 </html>
 <script>
@@ -27,19 +28,21 @@ function hideloader() {
 }
 let width = 1000, height = 600;
 
-let svg = d3.select("#my_graph")
-    .attr("viewBox", "0 0 " + width + " " + height)
-
+let svg = d3.select("svg").attr("viewBox", "0 0 " + width + " " + height)
+var colorDomain = [0,8000,16000,24000,32000,40000,48000,56000,64000]
+let dataMap = new Map()
+var colorScale = d3.scaleQuantize().domain([0,64000]).range(colorbrewer.Blues[9])
+var div = d3.select("body").append("div")   
+	.attr("class", "tooltip")               
+	.style("opacity", 0);
 // Load external data
-Promise.all([d3.json("sgmap.json"), d3.csv("population2021.csv")]).then(data => {
+Promise.all([d3.json("https://kaizerien.github.io/CSC3007-assignment3/sgmap.json"), d3.csv("https://kaizerien.github.io/CSC3007-assignment3/population2021.csv", function(d) {dataMap.set(d['Subzone'].toLowerCase(), +d.Population)})]).then(data => {
 
 console.log(data[0]);
 console.log(data[1]);
-
+hideloader();
 // Map and projection
-var projection = d3.geoMercator()
-    .center([103.851959, 1.290270])
-    .fitExtent([[20, 20], [980, 580]], data[0]);
+var projection = d3.geoMercator().center([103.851959, 1.290270]).fitExtent([[20, 20], [980, 580]], data[0]);
 
 let geopath = d3.geoPath().projection(projection);
 
@@ -50,8 +53,52 @@ svg.append("g")
     .enter()
     .append("path")
     .attr("d", geopath)
-    .attr("fill", "black");
+    .attr("fill", function(d) {
+    	d.total = dataMap.get(d.properties.Name.toLowerCase()) || 0;
+    	console.log("d total", d.total);
+    	console.log("colorScale", colorScale(d.total));
+      return colorScale(d.total);
+    }).on("mouseover", function(event, d) {
+  	var population = "";
+  	if (d.total == 0 ){
+  		population = "N/A";
+  	} else {
+  		population = d.total; 
+  	}
+  	// console.log("mouse over d", d);
+    let path = d3.select(event.currentTarget);
+    path.style("stroke", "red").style("stroke-width", 2);
+    div.transition().duration(200).style("opacity", 0.9);
+    div.html("Subdistrict Name: " + d.properties['Name'] + "</br>" +
+      "Population: " + population + "</br> Region: " + d.properties['Region Name'])
+    })
+    .on("mouseout", function() {
+        let path = d3.select(event.currentTarget);
+        path.style("stroke", "none");
+        div.transition().duration(300)
+        .style("opacity", 0);
+    })
 })
 
+var legend = svg.selectAll("g.legend")
+  .data(colorDomain)
+  .enter().append("g")
+  .attr("class", "legend");
+  var ls_w = 20, ls_h = 20;
 
+legend.append("rect")
+.attr("x", -100)
+.attr("y", function(d, i){ return 250 - (i*ls_h) - 2*ls_h;})
+.attr("width", ls_w)
+.attr("height", ls_h)
+.style("fill", function(d, i) { 
+    console.log("legend colorscale", colorScale(d));
+    return colorScale(d); })
+.style("opacity", 0.8);
+
+legend.append("text")
+.attr("x", -60)
+.attr("y", function(d, i){ return 250 - (i*ls_h) - ls_h - 4;})
+.text(function(d, i){ console.log("legend text", legend_labels[i]) ;
+    return legend_labels[i]; });
 </script>
