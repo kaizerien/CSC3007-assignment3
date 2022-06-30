@@ -3,7 +3,7 @@
 <html lang="en">
     <head>
         <script src="https://d3js.org/d3.v7.min.js"></script>
-        <script src="http://colorbrewer2.org/export/colorbrewer.js"></script>
+        <script src="https://colorbrewer2.org/export/colorbrewer.js"></script>
         <!-- <script src="script.js"></script> -->
         <link rel="stylesheet" href="style.css" />
         <meta charset="UTF-8" />
@@ -18,7 +18,7 @@
                 <span class="sr-only">Loading...</span>
             </div>
         </div>
-        <h1>Singapore Population Choropleth</h1>
+        <h1>Singapore Population</h1>
         <svg></svg>
     </body>
 </html>
@@ -65,7 +65,6 @@ svg.append("g")
   	} else {
   		population = d.total; 
   	}
-  	// console.log("mouse over d", d);
     let path = d3.select(event.currentTarget);
     path.style("stroke", "red").style("stroke-width", 2);
     div.transition().duration(200).style("opacity", 0.9);
